@@ -11,12 +11,24 @@ if not REPLICATE_API_TOKEN:
 
 client = replicate.Client(api_token=REPLICATE_API_TOKEN)
 
-# Model identifiers
-TTS_MODEL = "suno/bark"
-SADTALKER_MODEL = "lucataco/sadtalker"
-ANIMATE_DIFF_MODEL = "lucataco/animate-diff"
+# Fetch latest model versions dynamically
+try:
+    tts_model = client.models.get("suno/bark")
+    tts_version = tts_model.latest_version.id
 
-# Limit script length to approx. 1 minute of audio (~1000 chars)
+    sadtalker_model = client.models.get("lucataco/sadtalker")
+    sadtalker_version = sadtalker_model.latest_version.id
+
+    animate_diff_model = client.models.get("lucataco/animate-diff")
+    animate_diff_version = animate_diff_model.latest_version.id
+except Exception as e:
+    raise RuntimeError(f"Failed to fetch model versions: {e}. Check your API token and internet connection.")
+
+# Build full model identifiers
+TTS_MODEL = f"suno/bark:{tts_version}"
+SADTALKER_MODEL = f"lucataco/sadtalker:{sadtalker_version}"
+ANIMATE_DIFF_MODEL = f"lucataco/animate-diff:{animate_diff_version}"
+
 MAX_SCRIPT_LENGTH = 1000
 
 def extract_url(output):
@@ -59,7 +71,7 @@ def generate():
                 "text_temp": 0.7,
                 "waveform_temp": 0.7
             }
-            tts_output = replicate.run(TTS_MODEL, input=tts_input)
+            tts_output = client.run(TTS_MODEL, input=tts_input)
             audio_url = extract_url(tts_output)
             
             # Step 2: Generate talking head video with SadTalker
@@ -70,7 +82,7 @@ def generate():
                 "still": True,
                 "enhancer": True
             }
-            sadtalker_output = replicate.run(SADTALKER_MODEL, input=sadtalker_input)
+            sadtalker_output = client.run(SADTALKER_MODEL, input=sadtalker_input)
             video_url = extract_url(sadtalker_output)
             
             return jsonify({'video_url': video_url})
@@ -92,7 +104,7 @@ def generate():
                 "guidance_scale": 7.5,
                 "num_inference_steps": 25
             }
-            output = replicate.run(ANIMATE_DIFF_MODEL, input=animate_input)
+            output = client.run(ANIMATE_DIFF_MODEL, input=animate_input)
             video_url = extract_url(output)
             return jsonify({'video_url': video_url})
         except Exception as e:
