@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Swarg Studio · Divine AI Video</title>
+    <!-- Tailwind + Font -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz@14..32&display=swap" rel="stylesheet">
+    <style>
+        * { font-family: 'Inter', sans-serif; }
+        body { background: #050508; }
+        .glass {
+            background: rgba(20, 20, 30, 0.6);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 2rem;
+        }
+        .glass-card {
+            background: rgba(15, 15, 20, 0.5);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 215, 0, 0.15);
+        }
+        .tab-active {
+            background: rgba(255, 215, 0, 0.15);
+            color: #FFD700;
+            border-bottom: 2px solid #FFD700;
+        }
+        .divine-loader {
+            border: 3px solid rgba(255,215,0,0.1);
+            border-top: 3px solid #FFD700;
+            border-radius: 50%;
+            width: 48px;
+            height: 48px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body class="text-white antialiased flex items-center justify-center p-4 min-h-[100dvh]">
+    <div class="w-full max-w-2xl glass p-6 shadow-2xl">
+        <!-- Header -->
+        <div class="text-center mb-6">
+            <h1 class="text-4xl font-light tracking-wider bg-gradient-to-r from-gold-300 to-yellow-500 bg-clip-text text-transparent">SWARG STUDIO</h1>
+            <p class="text-sm text-gray-400 mt-1">where pixels meet divinity</p>
+        </div>
+
+        <!-- Tabs -->
+        <div class="flex gap-1 p-1 glass-card rounded-2xl mb-6">
+            <button id="tabPhoto" class="tab-btn flex-1 py-3 rounded-xl text-sm font-medium transition-all">📸 Photo to Video</button>
+            <button id="tabText" class="tab-btn flex-1 py-3 rounded-xl text-sm font-medium transition-all">✨ Text to Video</button>
+        </div>
+
+        <!-- Forms -->
+        <div id="photoForm" class="space-y-4">
+            <div class="glass-card rounded-xl p-5 space-y-4">
+                <label class="block">
+                    <span class="text-sm text-gray-300 mb-1 block">Upload image (face)</span>
+                    <input type="file" id="photoInput" accept="image/*" class="w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:bg-gold-500/10 file:text-gold-300 hover:file:bg-gold-500/20">
+                </label>
+                <label class="block">
+                    <span class="text-sm text-gray-300 mb-1 block">Divine script (text)</span>
+                    <textarea id="scriptInput" rows="2" placeholder="e.g., 'Om Namah Shivaya' in a soft voice..." class="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-gold-500/50"></textarea>
+                </label>
+            </div>
+        </div>
+
+        <div id="textForm" class="space-y-4 hidden">
+            <div class="glass-card rounded-xl p-5">
+                <label class="block">
+                    <span class="text-sm text-gray-300 mb-1 block">Your vision</span>
+                    <input type="text" id="promptInput" placeholder="a meditating saint, 4k, cinematic..." class="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-gold-500/50">
+                </label>
+            </div>
+        </div>
+
+        <!-- Generate Button -->
+        <button id="generateBtn" class="w-full mt-6 bg-gradient-to-r from-gold-700/80 to-amber-600/80 hover:from-gold-600 hover:to-amber-500 text-black font-semibold py-4 rounded-xl transition-all backdrop-blur-sm border border-white/10 shadow-lg">
+            ⚡ Manifest Video
+        </button>
+
+        <!-- Video Preview + Divine Loader -->
+        <div class="mt-6 glass-card rounded-2xl p-4 relative min-h-[220px] flex flex-col items-center justify-center">
+            <div id="videoContainer" class="hidden w-full">
+                <video id="videoPlayer" controls class="w-full rounded-xl border border-gold-500/30"></video>
+                <a id="downloadBtn" download="swarg_studio.mp4" class="mt-3 inline-block w-full text-center py-2 rounded-lg bg-white/5 hover:bg-white/10 text-sm text-gold-300 border border-gold-500/30 transition">⬇ Download Divine Video</a>
+            </div>
+            <div id="loaderContainer" class="hidden flex flex-col items-center gap-3">
+                <div class="divine-loader"></div>
+                <div id="statusText" class="text-sm text-gold-300/80 animate-pulse">Preparing divine energy...</div>
+            </div>
+            <div id="placeholder" class="text-gray-600 text-sm flex flex-col items-center gap-2">
+                <span class="text-5xl">🕉️</span>
+                <span>your creation will appear here</span>
+            </div>
+        </div>
+
+        <!-- Creator Credit -->
+        <div class="text-center mt-6 text-xs text-gray-600 border-t border-white/5 pt-4">
+            ✦ crafted by Amar Kumar from Bihar, India ✦
+        </div>
+    </div>
+
+    <script>
+        // --- VisualViewport fix for mobile keyboards ---
+        if (window.visualViewport) {
+            window.visualViewport.addEventListener('resize', () => {
+                document.body.style.paddingBottom = window.innerHeight - window.visualViewport.height + 'px';
+            });
+        }
+
+        // --- Tabs ---
+        const tabPhoto = document.getElementById('tabPhoto');
+        const tabText = document.getElementById('tabText');
+        const photoForm = document.getElementById('photoForm');
+        const textForm = document.getElementById('textForm');
+        const tabs = [tabPhoto, tabText];
+        
+        function setActiveTab(active) {
+            tabs.forEach(t => t.classList.remove('tab-active', 'text-white'));
+            active.classList.add('tab-active', 'text-gold-300');
+            photoForm.classList.toggle('hidden', active !== tabPhoto);
+            textForm.classList.toggle('hidden', active !== tabText);
+        }
+        tabPhoto.addEventListener('click', () => setActiveTab(tabPhoto));
+        tabText.addEventListener('click', () => setActiveTab(tabText));
+        setActiveTab(tabPhoto); // default
+
+        // --- UI elements ---
+        const generateBtn = document.getElementById('generateBtn');
+        const photoInput = document.getElementById('photoInput');
+        const scriptInput = document.getElementById('scriptInput');
+        const promptInput = document.getElementById('promptInput');
+        const placeholder = document.getElementById('placeholder');
+        const videoContainer = document.getElementById('videoContainer');
+        const loaderContainer = document.getElementById('loaderContainer');
+        const statusText = document.getElementById('statusText');
+        const videoPlayer = document.getElementById('videoPlayer');
+        const downloadBtn = document.getElementById('downloadBtn');
+
+        // Status messages for divine loader
+        const statusMessages = [
+            "Awakening cosmic energies...",
+            "Analyzing sacred geometry...",
+            "Chanting divine algorithms...",
+            "Manifesting celestial motion...",
+            "Infusing with golden light..."
+        ];
+
+        generateBtn.addEventListener('click', async () => {
+            const isPhoto = !photoForm.classList.contains('hidden');
+            
+            // Validation
+            if (isPhoto) {
+                if (!photoInput.files[0]) return alert('🕉️ Please select an image');
+                if (!scriptInput.value.trim()) return alert('🕉️ Please enter a script');
+            } else {
+                if (!promptInput.value.trim()) return alert('🕉️ Please enter a prompt');
+            }
+
+            // Prepare FormData
+            const formData = new FormData();
+            formData.append('tab', isPhoto ? 'photo' : 'text');
+            if (isPhoto) {
+                formData.append('image', photoInput.files[0]);
+                formData.append('script', scriptInput.value.trim());
+            } else {
+                formData.append('prompt', promptInput.value.trim());
+            }
+
+            // Show loader, hide video & placeholder
+            placeholder.classList.add('hidden');
+            videoContainer.classList.add('hidden');
+            loaderContainer.classList.remove('hidden');
+
+            // Rotate status messages
+            let msgIndex = 0;
+            statusText.textContent = statusMessages[msgIndex];
+            const interval = setInterval(() => {
+                msgIndex = (msgIndex + 1) % statusMessages.length;
+                statusText.textContent = statusMessages[msgIndex];
+            }, 2000);
+
+            try {
+                const response = await fetch('/generate', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await response.json();
+                clearInterval(interval);
+
+                if (data.error) {
+                    alert('❌ ' + data.error);
+                    loaderContainer.classList.add('hidden');
+                    placeholder.classList.remove('hidden');
+                    return;
+                }
+
+                if (data.video_url) {
+                    videoPlayer.src = data.video_url;
+                    downloadBtn.href = data.video_url;
+                    videoContainer.classList.remove('hidden');
+                    loaderContainer.classList.add('hidden');
+                } else {
+                    throw new Error('No video URL returned');
+                }
+            } catch (err) {
+                clearInterval(interval);
+                alert('Something went wrong: ' + err.message);
+                loaderContainer.classList.add('hidden');
+                placeholder.classList.remove('hidden');
+            }
+        });
+    </script>
+</body>
+</html>
