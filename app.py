@@ -11,16 +11,16 @@ if not REPLICATE_API_TOKEN:
 
 client = replicate.Client(api_token=REPLICATE_API_TOKEN)
 
-# Fetch latest model versions dynamically
+# Fetch latest model versions dynamically (correct method)
 try:
     tts_model = client.models.get("suno/bark")
-    tts_version = tts_model.latest_version.id
+    tts_version = tts_model.versions.list()[0].id
 
     sadtalker_model = client.models.get("lucataco/sadtalker")
-    sadtalker_version = sadtalker_model.latest_version.id
+    sadtalker_version = sadtalker_model.versions.list()[0].id
 
     animate_diff_model = client.models.get("lucataco/animate-diff")
-    animate_diff_version = animate_diff_model.latest_version.id
+    animate_diff_version = animate_diff_model.versions.list()[0].id
 except Exception as e:
     raise RuntimeError(f"Failed to fetch model versions: {e}. Check your API token and internet connection.")
 
